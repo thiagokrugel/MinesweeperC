@@ -1,30 +1,28 @@
 #include "Minesweeper.h"
 
+// Variáveis para definir condições de finalização do jogo.
 bool lose = false;
 bool win = false;
 
-void criaCampo(Board *ptr)
-{
+// Responsável pela inicialização do campo.
+void generateBoard(Board* board) {
     int i, j;
-    ptr->cells = (Campo**)malloc((ptr->altura+2)*sizeof(Campo*));
+    board->cells = (Cell**) malloc((board->height+2) * sizeof(Cell*));
 
-    for(i = 0; i <= ptr->altura+1; ++i)
-        ptr->cells[i] = (Campo*)malloc((ptr->largura+2)*sizeof(Campo));
+    for(i = 0; i <= board->height+1; ++i)
+        board->cells[i] = (Cell*) malloc((board->width+2) * sizeof(Cell));
   
-    for(i = 0; i <= ptr->altura+1; ++i){
-        for(j = 0; j <= ptr->largura+1; ++j){
-            if (i==0 || i==ptr->altura+1 || j==0 || j == ptr->largura+1)
-            {
-                ptr->cells[i][j].bomb = false;
-                ptr->cells[i][j].uncovered = true;
+    for(i = 0; i <= board->height+1; ++i){
+        for(j = 0; j <= board->width+1; ++j){
+            if (i==0 || i==board->height+1 || j==0 || j == board->width+1) {
+                board->cells[i][j].bomb = false;
+                board->cells[i][j].uncovered = true;
             }
-
-            else
-            {
-                ptr->cells[i][j].ch = '-';  // criando o campo com '-'
-                ptr->cells[i][j].number_of_mines = 0; // inicializar as bombas
-                ptr->cells[i][j].bomb = false;
-                ptr->cells[i][j].uncovered = false;
+            else {
+                board->cells[i][j].ch = '-';              // Valor inicial.
+                board->cells[i][j].mineCount = 0;         // inicializar as bombas adjacentes como zero.
+                board->cells[i][j].bomb = false;
+                board->cells[i][j].uncovered = false;
             }
         }
     }
@@ -32,158 +30,145 @@ void criaCampo(Board *ptr)
      return;
 }
 
-void printarCampo(Board *ptr)
-{
+void printBoard(Board* board) {
     system("clear");
-
     printf("  ");
     int i, j;
-    for(i = 1; i <= ptr->largura; ++i) // loop in order print each row 
-        printf("%d ", i); // numbers which shows rows
+
+    for(i = 1; i <= board->width; ++i)
+        printf("%d ", i);
     printf("\n");
-    // printar coordenadas
-    for(i = 1; i <= ptr->altura; ++i){
-        for(j = 0; j<= ptr->largura; ++j){
-          if(j == 0) printf("%d ", i);
-          else printf("%c ", ptr->cells[i][j].ch);
+
+    // Printar coordenadas
+    for(i = 1; i <= board->height; ++i){
+        for(j = 0; j<= board->width; ++j){
+            if (j == 0) 
+                printf("%d ", i);
+            else 
+                printf("%c ", board->cells[i][j].ch);
         }
         printf("\n");
     }
    return;
 }
 
-void aleatorizaBomba(Board *ptr, int mines)
-{
-    int random_row, random_col, num_of_mine = 0;
-    while(num_of_mine < mines)
-    {
-        random_row = rand()%ptr->altura+1; // generating random number
-        random_col = rand()%ptr->largura+1;  // generating random number
+// Definir bombas em locais aleatórios dentro do campo.
+void randomizeBombs(Board* board, int mines) {
+    int random_row, random_col, numMines = 0;
+    while(numMines < mines) {
+        random_row = rand()%board->height+1;
+        random_col = rand()%board->width+1;
 
-        if(ptr->cells[random_row][random_col].bomb == false && (random_row != 0 && random_col != 0)) // checking for numbers which were generated before or not
-        {
-            ptr->cells[random_row][random_col].bomb = true; // if not, make a new bomb
-            num_of_mine++;
+        if(!board->cells[random_row][random_col].bomb && (random_row != 0 && random_col != 0)) {
+            board->cells[random_row][random_col].bomb = true;
+            numMines++;
         }
     }
      return;
 }
 
-void bombasAdjacentes(Board *ptr){
+// Responsável por contar a quantidade de bombas adjacentes a cada espaço no campo.
+void adjBombs(Board* board){
 	int i, j, m, n;
-	for(i = 1; i <= ptr->altura; ++i){
-        for(j = 1; j <= ptr->largura; ++j){
-            if (ptr->cells[i][j].bomb == false){
-                for(m = i-1; m <= i+1; ++m)
-                for(n = j-1; n <= j+1; ++n)
-                    if(ptr->cells[m][n].bomb == true) // contando as bombas em volta
-                    ptr->cells[i][j].number_of_mines++;
+	for(i = 1; i <= board->height; ++i) {
+        for(j = 1; j <= board->width; ++j) {
+            if (!board->cells[i][j].bomb) {
+                for (m = i-1, n = j-1; m <= i+1 && n <= j+1; ++m, ++n)
+                //for(m = i-1; m <= i+1; ++m)
+                //for(n = j-1; n <= j+1; ++n)
+                    if(board->cells[m][n].bomb) // contando as bombas em volta
+                    board->cells[i][j].mineCount++;
             }
         }
     }
+
     return;
 }
 
-void escavar(Board *ptr, int a, int b)
-{
-    if(ptr->cells[a][b].bomb == true)
-    {
-        lose = true; // terminate the game "in the play game function (while loop)"
+// Responsável por lidar com a função de escavação do jogo.
+void dig(Board* board, int rows, int columns) {
+    if(board->cells[rows][columns].bomb) {
+        lose = true;
         int i, j;
-        /* nested loop to uncover cells */
-        for(i = 1; i <= ptr->altura; ++i)
-            for(j = 1; j <= ptr->largura; ++j)
-               if(ptr->cells[i][j].bomb == true) /* if there is a bomb */
-                  ptr->cells[i][j].ch = '*'; // showing all bombs
-               else
-                  ptr->cells[i][j].ch = ptr->cells[i][j].number_of_mines + '0'; // troca a casa escavada pelo número de bombas adjacentes
-        printarCampo(ptr);
+        for(i = 1; i <= board->height; ++i)
+            for(j = 1; j <= board->width; ++j)
+                if(board->cells[i][j].bomb)
+                    board->cells[i][j].ch = '*';
+                else
+                    board->cells[i][j].ch = board->cells[i][j].mineCount + '0'; // Troca a casa escavada pelo número de bombas adjacentes
+        printBoard(board);
         printf("\nFIM DE JOGO\n");
 
-         return;
+        return;
     }
 
-   ptr->cells[a][b].ch = ptr->cells[a][b].number_of_mines + '0';
-    if(ptr->cells[a][b].number_of_mines == 0)
-       reveal_automatically(ptr,a,b); // se o número de bombas adjacentes for 0, revela os adjacentes
+    board->cells[rows][columns].ch = board->cells[rows][columns].mineCount + '0';
+    if(board->cells[rows][columns].mineCount == 0)
+        revealBombs(board, rows, columns); // se o número de bombas adjacentes for 0, revela os adjacentes
     else
-       ptr->cells[a][b].uncovered = true;
+        board->cells[rows][columns].uncovered = true;
 
     return;
 }
 
-void reveal_automatically(Board *ptr, int a, int b)
-{
+// Utilizada para revelar as bombas adjacentes, de maneira recursiva.
+void revealBombs(Board* board, int rows, int columns) {
     int i, j;
-
-    if(ptr->cells[a][b].uncovered == false)
-    {
-        ptr->cells[a][b].uncovered = true;
-        /* nested loop to reveal automatically */
-        for(i = a-1; i <= a+1; ++i)
-            for(j = b-1; j <= b+1; ++j)
-               if(ptr->cells[i][j].uncovered == false)
-                 escavar(ptr,i,j); //calling function in order to uncover cells
+    if(!board->cells[rows][columns].uncovered) {
+        board->cells[rows][columns].uncovered = true;
+        for(i = rows-1; i <= rows+1; ++i)
+            for(j = columns-1; j <= columns+1; ++j)
+                if(!board->cells[i][j].uncovered)
+                    dig(board, i, j);
     }
+
     return;
 }
 
-void checarVitoria(Board *ptr, int mines)
-{
+void checkVictory(Board* board, int mines) {
     int i, j, counter = 0;
+    for(i = 1; i <= board->height; ++i)
+        for(j = 1; j <= board->width; ++j)
+            if(!board->cells[i][j].bomb && board->cells[i][j].ch != '-' && board->cells[i][j].ch != '!')
+                counter++;
 
-
-    for(i = 1; i <= ptr->altura; ++i)
-        for(j = 1; j <= ptr->largura; ++j)
-           if(ptr->cells[i][j].bomb==false && ptr->cells[i][j].ch != '-' && ptr->cells[i][j].ch != '!')
-             counter++;
-
-    if (counter == (ptr->altura*ptr->largura) - mines)
-    {
+    if(counter == (board->height * board->width) - mines) {
         win = true;
-        for(i = 1; i <= ptr->altura; ++i)
-            for(j = 1; j <= ptr->largura; ++j)
-               if(ptr->cells[i][j].bomb == true)
-                  ptr->cells[i][j].ch = '*'; // mostrar as bombas
-               else
-                  ptr->cells[i][j].ch = ptr->cells[i][j].number_of_mines + '0'; // mostrar as adjacentes
-
-        printarCampo(ptr);
-        printf("\nVOCÊ VENCEU\n");
-          return;
+        for(i = 1; i <= board->height; ++i)
+            for(j = 1; j <= board->width; ++j)
+                if(board->cells[i][j].bomb)
+                    board->cells[i][j].ch = '*'; // mostrar as bombas
+                else
+                    board->cells[i][j].ch = board->cells[i][j].mineCount + '0'; // mostrar a quantidade de bombas adjacentes
+        printBoard(board);
+        printf("\nVOCÊ VENCEU\n"); 
     }
+
+    return;
 }
 
-
-void play_game()
-{
-
-    srand(time(NULL)); // set seed for rand() in the "bombplacing_randomly" function
-
-    printf("\t\t\t\t ***WELCOME TO MINEWSWEEPER GAME*** \n");
+void startGame() {
+    srand(time(NULL));
+    printf("\t\t\t\t ***Bem-vindo ao Campo-Minado!*** \n");
     int x, y, row, column, mines;
     char op;
 
-    printf("Insira o tamanho do campo (separe os números com um espaço):\n");
-    scanf("%d%d", &x, &y);
+    selectDifficulty(&x, &y, &mines);
 
-    printf("Insira o número de bombas que estarão no campo: ");
-    scanf("%d", &mines);
+    // Alocando memória para o campo.
+    Board* board = (Board*) malloc(sizeof(Board)); 
+    board->width = x;
+    board->height = y;
 
-    Board *ptr=(Board*)malloc(sizeof(Board)); // alocando memória para o campo
-    ptr->altura = x;
-    ptr->largura = y;
+    generateBoard(board);
+    randomizeBombs(board, mines);
+    adjBombs(board);
 
-    criaCampo(ptr);
-    aleatorizaBomba(ptr,mines);
-    bombasAdjacentes(ptr);
-
-    do
-    {
-        printarCampo(ptr);
+    do {
+        printBoard(board);
 
         printf("Você quer escavar ou marcar com bandeira? 'e' ou 'b' ");
-        scanf(" %c", &op);
+        scanf("%c", &op);
         fflush(stdin);
 
         printf("Insira a linha desejada: ");
@@ -192,14 +177,46 @@ void play_game()
         scanf("%d", &column);
 
         if(op == 'e') // e - escavar
-            escavar(ptr, row, column);
+            dig(board, row, column);
         if(op == 'b') // b - bandeira
-            ptr->cells[row][column].ch = '!';
-        if (!lose) check_for_win(ptr, mines);
+            board->cells[row][column].ch = '!';
+
+        if (!lose) 
+            checkVictory(board, mines);
     } while(!lose && !win);
 
-    for(int i = 0; i <= ptr->altura + 1; i++)
-      free(ptr->cells[i]); // limpar cada célula do campo
-    free(ptr->cells); // limpar o array de ponteiros
+    for(int i = 0; i <= board->height+1; i++)
+        free(board->cells[i]);          // limpar cada célula do campo
+    free(board->cells);                 // limpar o array de ponteiros
+
+    return;
+}
+
+void selectDifficulty(int* x, int* y, int* mines) {
+    int choice;
+    printf("1. Fácil\n2. Médio\n3. Difícil\n4. Personalizado");
+    scanf("%d", choice);
+
+    switch (choice) {
+    case 1:
+        *x = 8;  *y = 8;  *mines = 10;
+        break;
+    case 2:
+        *x = 16; *y = 16; *mines = 40;
+        break;
+    case 3:
+        *x = 30; *y = 16; *mines = 99;
+        break;
+    case 4:
+        printf("Insira o tamanho do campo (separe os números com um espaço):\n");
+        scanf("%d%d", &x, &y);
+
+        printf("Insira o número de bombas que estarão no campo: ");
+        scanf("%d", &mines);
+        break;
+    default:
+        break;
+    }
+
     return;
 }

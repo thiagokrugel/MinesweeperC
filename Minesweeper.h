@@ -3,25 +3,26 @@
 #include <stdio.h>
 #include <time.h>
 
-// construir a struct do campo
-typedef struct Campo{
-    int number_of_mines;
+// estrutura responsável por armazenar informações acerca de cada espaço da matriz.
+typedef struct Cell {
+    int mineCount;
     char ch;
     bool uncovered;
     bool bomb;
-}Campo;
+} Cell;
 
-// criando as dimensões do campo
-typedef struct Board{
-    int altura, largura;
-    Campo **cells;
-}Board;
+// definindo uma estrutura para as dimensões do jogo.
+typedef struct Board {
+    int height, width;
+    Cell** cells;
+} Board;
 
-void criaCampo(Board*);
-void printarCampo(Board*);
-void aleatorizaBomba(Board*, int);
-void bombasAdjacentes(Board*);
-void escavar(Board*, int, int);
-void reveal_automatically(Board*, int, int);
-void checarVitoria(Board*, int);
-void play_game();
+void generateBoard(Board*);
+void printBoard(Board*);
+void randomizeBombs(Board*, int);
+void adjBombs(Board*);
+void dig(Board*, int, int);
+void revealBombs(Board*, int, int);
+void checkVictory(Board*, int);
+void startGame();
+void selectDifficulty(int*, int*, int*);
