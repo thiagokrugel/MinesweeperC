@@ -74,8 +74,6 @@ void adjBombs(Board* board){
         for(j = 1; j <= board->width; ++j) {
             if (!board->cells[i][j].bomb) {
                 for (m = i-1, n = j-1; m <= i+1 && n <= j+1; ++m, ++n)
-                //for(m = i-1; m <= i+1; ++m)
-                //for(n = j-1; n <= j+1; ++n)
                     if(board->cells[m][n].bomb) // contando as bombas em volta
                     board->cells[i][j].mineCount++;
             }
@@ -167,14 +165,17 @@ void startGame() {
     do {
         printBoard(board);
 
-        printf("Você quer escavar ou marcar com bandeira? 'e' ou 'b' ");
-        scanf("%c", &op);
+        printf("Você quer escavar (e), ou marcar com bandeira (b)? \n");
+        scanf(" %c", &op);
         fflush(stdin);
 
-        printf("Insira a linha desejada: ");
-        scanf("%d", &row);
         printf("Insira a coluna desejada: ");
-        scanf("%d", &column);
+        scanf(" %d", &column);
+        fflush(stdin);
+        printf("Insira a linha desejada: ");
+        scanf(" %d", &row);
+        fflush(stdin);
+        
 
         if(op == 'e') // e - escavar
             dig(board, row, column);
@@ -194,29 +195,33 @@ void startGame() {
 
 void selectDifficulty(int* x, int* y, int* mines) {
     int choice;
-    printf("1. Fácil\n2. Médio\n3. Difícil\n4. Personalizado");
-    scanf("%d", choice);
+    printf("1. Fácil\n2. Médio\n3. Difícil\n4. Personalizado\n");
+    printf("Digite a opção desejada: ");
+    scanf(" %d", &choice);
 
     switch (choice) {
-    case 1:
-        *x = 8;  *y = 8;  *mines = 10;
-        break;
-    case 2:
-        *x = 16; *y = 16; *mines = 40;
-        break;
-    case 3:
-        *x = 30; *y = 16; *mines = 99;
-        break;
-    case 4:
-        printf("Insira o tamanho do campo (separe os números com um espaço):\n");
-        scanf("%d%d", &x, &y);
-
-        printf("Insira o número de bombas que estarão no campo: ");
-        scanf("%d", &mines);
-        break;
-    default:
-        break;
+      default:
+          printf("Opção inválida.");
+          break;
+      case 1:
+          *x = 8;  *y = 8;  *mines = 10;
+          break;
+      case 2:
+          *x = 16; *y = 16; *mines = 40;
+          break;
+      case 3:
+          *x = 30; *y = 16; *mines = 99;
+          break;
+      case 4:
+          printf("Insira o tamanho do campo (separe os números com um espaço):\n");
+          scanf("%d%d", x, y);
+  
+          printf("Insira o número de bombas que estarão no campo: ");
+          scanf("%d", mines);
+          break;
     }
+
+    
 
     return;
 }
